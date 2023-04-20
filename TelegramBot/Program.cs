@@ -25,7 +25,7 @@ static class Program
 			receiverOptions,
 			cancellationToken
 		);
-		await Schedule.InitScheduler(bot);
+		await Schedule.StartScheduler(bot);
 		Console.ReadLine();
 	}
 }

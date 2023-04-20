@@ -45,12 +45,38 @@ public static class DataBaseMethods
 		}
 	}
 
-	public static async Task AddNotes(long tgId, string note)
+	public static async Task AddNote(long tgId, string note)
 	{
 		using (ApplicationContext db = new ApplicationContext())
 		{
 			await db.Note.AddAsync(new Note { TgId = tgId, TextValue = note});
 			await db.SaveChangesAsync();
+		}
+	}
+
+	public static async Task<ReminderSchedule?> GetSchedule(long tgId)
+	{
+		using (ApplicationContext db = new ApplicationContext())
+		{
+			var result = await db.Schedules.FindAsync(tgId);
+			return result;
+		}
+	}
+	public static IAsyncEnumerator<ReminderSchedule> GetScheduleEnumerator()
+	{
+		using (ApplicationContext db = new ApplicationContext())
+		{
+			var result = db.Schedules.GetAsyncEnumerator();
+			return result;
+		}
+	}
+	public static async Task SetSchedule(long tgId, int startTime, int endTime)
+	{
+		using (ApplicationContext db = new ApplicationContext())
+		{
+			await db.Schedules.AddAsync(new ReminderSchedule {TgId = tgId, StartTime = startTime, EndTime = endTime});
+			await db.SaveChangesAsync();
+
 		}
 	}
 }

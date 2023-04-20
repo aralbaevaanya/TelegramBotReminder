@@ -30,7 +30,7 @@ public static class BotCommands
 
 			if (!message.Text.StartsWith("/"))
 			{
-				var ans = DataBaseMethods.AddNotes(message.From.Id, message.Text).IsCompletedSuccessfully
+				var ans = DataBaseMethods.AddNote(message.From.Id, message.Text).IsCompletedSuccessfully
 					? "Заметка добавлена"
 					: "о-оу, что-то пошло не так";
 				await botClient.SendTextMessageAsync(
