@@ -2,6 +2,7 @@
 using TelegramBot.dbutils;
 using TelegramBot.keyboards;
 using Telegram.Bot.Types.Enums;
+using static TelegramBot.SchedulerService.Schedule;
 using Update = Telegram.Bot.Types.Update;
 namespace TelegramBot.BotCommands;
 
@@ -19,7 +20,7 @@ public static class BotCommands
 			if (message.Text.ToLower() == "/start")
 			{
 				await DataBaseMethods.AddOrUpdateUser(message.From.Id, message.Chat.Id);
-				await SchedulerService.Schedule.AddScheduleJob(message.From.Id);
+				StatsSendingScheduledMessageForUser(message.From.Id);
 				await botClient.SendTextMessageAsync(
 					chatId: message.Chat,
 					text: "Привет, напиши заметку, и однажды я напомню тебе о ней",

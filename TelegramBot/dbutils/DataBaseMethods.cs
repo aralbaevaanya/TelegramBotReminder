@@ -62,19 +62,22 @@ public static class DataBaseMethods
 			return result;
 		}
 	}
-	public static IAsyncEnumerator<ReminderSchedule> GetScheduleEnumerator()
+	public static IEnumerator<ReminderSchedule> GetScheduleEnumerator()
 	{
 		using (ApplicationContext db = new ApplicationContext())
 		{
-			var result = db.Schedules.GetAsyncEnumerator();
-			return result;
+			var scheduleEnumerator = db.Schedules.GetAsyncEnumerator();
+			while (scheduleEnumerator.MoveNextAsync().Result)
+			{
+				yield return scheduleEnumerator.Current;
+			}
 		}
 	}
-	public static async Task SetSchedule(long tgId, int startTime, int endTime)
+	public static async Task SaveScheduleForUser(long tgId, int startTime, int endTime)
 	{
 		using (ApplicationContext db = new ApplicationContext())
 		{
-			await db.Schedules.AddAsync(new ReminderSchedule {TgId = tgId, StartTime = startTime, EndTime = endTime});
+			await db.Schedules.AddAsync(new ReminderSchedule {TgId = tgId, StartTimeOfDay = startTime, EndTimeOfDay = endTime});
 			await db.SaveChangesAsync();
 
 		}

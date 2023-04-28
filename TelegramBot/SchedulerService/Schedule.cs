@@ -1,4 +1,5 @@
-﻿using Quartz;
+﻿using Microsoft.EntityFrameworkCore;
+using Quartz;
 using Quartz.Impl;
 using Telegram.Bot;
 using TelegramBot.dbutils;
@@ -20,18 +21,33 @@ public static class Schedule
 		await Scheduler.Start();
 		Scheduler.Context.Put("bot",bot);
 		Console.WriteLine("Start schedule");
-		IAsyncEnumerator<ReminderSchedule> scheduleEnumerator = DataBaseMethods.GetScheduleEnumerator();
-		var rand = new Random();
-		var tomorrowDateTime = DateTime.Today.AddDays(1);
-		while (scheduleEnumerator.MoveNextAsync().Result)
-		{
-			ReminderSchedule reminderSchedule = scheduleEnumerator.Current;
-			await AddScheduleJob(reminderSchedule.TgId,
-				tomorrowDateTime.AddHours(rand.Next(reminderSchedule.StartTime,reminderSchedule.EndTime)));
-		}
+		DateTime today = DateTime.Today;
+		IJobDetail job = JobBuilder.Create<FillScheduleForDayJob>()
+			.WithIdentity(today.ToString(), "FillScheduleForToday")
+			.UsingJobData("date", today.Ticks)
+			.Build();
+		ITrigger trigger = TriggerBuilder.Create()
+			.WithIdentity(today.ToString(), "FillScheduleForTodayTrigger")
+			.StartNow()
+			.WithSimpleSchedule(x => x.WithIntervalInMinutes(1).WithRepeatCount(0).Build())
+			.Build();
+		await Scheduler.ScheduleJob(job, trigger);
 	}
 
-	public static Task AddScheduleJob(long tgId) => AddScheduleJob(tgId,DateTime.Now.AddDays(1));
+	public static async void StatsSendingScheduledMessageForUser(long tgId)
+	{
+		try
+		{
+			//save default schedule in db
+			await DataBaseMethods.SaveScheduleForUser(tgId, 10, 22);
+			//add job for tomorrow at 17:00 for example
+			await AddScheduleJob(tgId, DateTime.Today.AddDays(1).AddHours(17));
+		}
+		catch (DbUpdateException e)
+		{
+			Console.WriteLine($"Schedule for user {tgId} already exist in database");
+		}
+	}
 	
 	public static async Task AddScheduleJob(long tgId, DateTimeOffset dateTime)
 	{
@@ -39,14 +55,6 @@ public static class Schedule
 			.WithIdentity(tgId.ToString(), "SendMessageJob")
 			.UsingJobData("tgId", tgId)
 			.Build();
-		//this is block for test
-		// ITrigger trigger = TriggerBuilder.Create()
-		// 	.WithIdentity(tgId.ToString(), "SendMessageTrigger")
-		// 	.StartNow()
-		// 	.WithSimpleSchedule(x => x
-		// 		.WithIntervalInSeconds(10)
-		// 		.RepeatForever())
-		// 	.Build();
 		
 		ITrigger trigger = TriggerBuilder.Create()
 			.WithIdentity(tgId.ToString(), "SendMessageTrigger")

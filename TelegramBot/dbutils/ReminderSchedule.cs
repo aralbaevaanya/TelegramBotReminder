@@ -6,8 +6,8 @@ namespace TelegramBot.dbutils
 	{
 		[Key]
 		public long TgId { get; set; }
-		public int StartTime {get; set;}
-		public int EndTime { get; set; }
+		public int StartTimeOfDay {get; set;}
+		public int EndTimeOfDay { get; set; }
 		
 	}
 }
