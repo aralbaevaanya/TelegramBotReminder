@@ -2,13 +2,13 @@ using Telegram.Bot;
 using Telegram.Bot.Polling;
 using TelegramBot.SchedulerService;
 using static TelegramBot.BotCommands.BotCommands;
+using ConfigurationManager = System.Configuration.ConfigurationManager;
 
 namespace TelegramBot;
 
 static class Program
 {
-	static ITelegramBotClient bot = new TelegramBotClient("6130059484:AAFMihpOr0P2zScjiPgYi4DdatB4-BZbfSU");
-
+	static ITelegramBotClient bot = new TelegramBotClient(ConfigurationManager.AppSettings["telegramToken"]);
 
 	static async Task Main(string[] args)
 	{
