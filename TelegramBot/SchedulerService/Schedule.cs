@@ -25,13 +25,14 @@ public static class Schedule
 
 		var todayDate = DateTime.Today.AddHours(-12); //12:00AM -> 00:00AM
 		var rand = new Random();
-		using var scheduleEnumerator = DataBaseMethods.GetSchedules().GetEnumerator();
-		while (scheduleEnumerator.MoveNext())
+		var scheduleBook = DataBaseMethods.GetSchedules();
+		foreach (var scheduleList in scheduleBook)
 		{
-			async void ScheduleDelegate(ReminderSchedule schedule) => await AddScheduleJob(schedule.TgId,
-				todayDate.AddHours(rand.Next(schedule.StartTimeOfDay, schedule.EndTimeOfDay)));
-
-			await scheduleEnumerator.Current.ForEachAsync(ScheduleDelegate);
+			foreach (var schedule in scheduleList)
+			{
+				await AddScheduleJob(schedule.TgId,
+					todayDate.AddHours(rand.Next(schedule.StartTimeOfDay, schedule.EndTimeOfDay)));
+			}
 		}
 	}
 
