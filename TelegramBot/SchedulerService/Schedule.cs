@@ -16,46 +16,45 @@ public static class Schedule
 		Scheduler = factory.GetScheduler().Result;
 		Console.WriteLine("Init schedule");
 	}
+
 	public static async Task StartScheduler(ITelegramBotClient bot)
 	{
 		await Scheduler.Start();
-		Scheduler.Context.Put("bot",bot);
-		Console.WriteLine("Start schedule");
-		DateTime today = DateTime.Today;
-		IJobDetail job = JobBuilder.Create<FillScheduleForDayJob>()
-			.WithIdentity(today.ToString(), "FillScheduleForToday")
-			.UsingJobData("date", today.Ticks)
-			.Build();
-		ITrigger trigger = TriggerBuilder.Create()
-			.WithIdentity(today.ToString(), "FillScheduleForTodayTrigger")
-			.StartNow()
-			.WithSimpleSchedule(x => x.WithIntervalInMinutes(1).WithRepeatCount(0).Build())
-			.Build();
-		await Scheduler.ScheduleJob(job, trigger);
+		Scheduler.Context.Put("bot", bot);
+		Console.WriteLine("Start scheduler");
+
+		var todayDate = DateTime.Today.AddHours(-12); //12:00AM -> 00:00AM
+		var rand = new Random();
+		using var scheduleEnumerator = DataBaseMethods.GetSchedules().GetEnumerator();
+		while (scheduleEnumerator.MoveNext())
+		{
+			async void ScheduleDelegate(ReminderSchedule schedule) => await AddScheduleJob(schedule.TgId,
+				todayDate.AddHours(rand.Next(schedule.StartTimeOfDay, schedule.EndTimeOfDay)));
+
+			await scheduleEnumerator.Current.ForEachAsync(ScheduleDelegate);
+		}
 	}
 
-	public static async void StatsSendingScheduledMessageForUser(long tgId)
+	public static async void StartSendingScheduledMessageForUser(long tgId)
 	{
 		try
 		{
 			//save default schedule in db
 			await DataBaseMethods.SaveScheduleForUser(tgId, 10, 22);
-			//add job for tomorrow at 17:00 for example
-			await AddScheduleJob(tgId, DateTime.Today.AddDays(1).AddHours(17));
 		}
 		catch (DbUpdateException e)
 		{
 			Console.WriteLine($"Schedule for user {tgId} already exist in database");
 		}
 	}
-	
+
 	public static async Task AddScheduleJob(long tgId, DateTimeOffset dateTime)
 	{
 		IJobDetail job = JobBuilder.Create<ReminderJob>()
 			.WithIdentity(tgId.ToString(), "SendMessageJob")
 			.UsingJobData("tgId", tgId)
 			.Build();
-		
+
 		ITrigger trigger = TriggerBuilder.Create()
 			.WithIdentity(tgId.ToString(), "SendMessageTrigger")
 			.StartAt(dateTime)

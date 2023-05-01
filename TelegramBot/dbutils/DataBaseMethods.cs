@@ -73,6 +73,23 @@ public static class DataBaseMethods
 			}
 		}
 	}
+	
+	public static IEnumerable<IQueryable<ReminderSchedule>> GetSchedules()
+	{
+		using (ApplicationContext db = new ApplicationContext())
+		{
+			var offsetNum = 0;
+			const int LIMIT_NUM = 100;
+			IQueryable<ReminderSchedule> schedules;
+			do
+			{
+				schedules = db.Schedules.FromSql($"SELECT * FROM public.\"Schedules\" LIMIT {LIMIT_NUM} OFFSET {offsetNum}");
+				yield return schedules;
+				offsetNum += LIMIT_NUM;
+			} while (schedules.Count() == LIMIT_NUM);
+		}
+	}
+	
 	public static async Task SaveScheduleForUser(long tgId, int startTime, int endTime)
 	{
 		using (ApplicationContext db = new ApplicationContext())

@@ -18,4 +18,12 @@
       <PackageReference Include="Telegram.Bots.Extensions.Polling" Version="5.9.0" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Include="app.config">
+        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      </None>
+    </ItemGroup>
+
 </Project>
