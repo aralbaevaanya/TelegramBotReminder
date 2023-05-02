@@ -1,14 +1,15 @@
 ﻿using Telegram.Bot;
 using TelegramBot.dbutils;
 using TelegramBot.keyboards;
-using Telegram.Bot.Types.Enums;
 using static TelegramBot.SchedulerService.Schedule;
+using Message = Telegram.Bot.Types.Message;
 using Update = Telegram.Bot.Types.Update;
+using UpdateType = Telegram.Bot.Types.Enums.UpdateType;
+
 namespace TelegramBot.BotCommands;
 
 public static class BotCommands
 {
-	
 	public static async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update,
 		CancellationToken cancellationToken)
 	{
@@ -17,23 +18,19 @@ public static class BotCommands
 		{
 			var message = update.Message;
 			if (message == null) return;
-			if (message.Text.ToLower() == "/start")
+			var messageText = message.Text;
+			switch (messageText.ToLower())
 			{
-				await DataBaseMethods.AddOrUpdateUser(message.From.Id, message.Chat.Id);
-				StartSendingScheduledMessageForUser(message.From.Id);
-				await botClient.SendTextMessageAsync(
-					chatId: message.Chat,
-					text: "Привет, напиши заметку, и однажды я напомню тебе о ней",
-					replyMarkup: Keyboards.ReplyKeyboard);
-
-				return;
+				case "/start": StartCommand(botClient, message); break;
+				case "/shownote": SendRandomNote(botClient, message.From.Id); break;
+				case "/showallnotes": SendAllNotes(botClient, message.From.Id); break;
 			}
 
 			if (!message.Text.StartsWith("/"))
 			{
-				var ans = DataBaseMethods.AddNote(message.From.Id, message.Text).IsCompletedSuccessfully
-					? "Заметка добавлена"
-					: "о-оу, что-то пошло не так";
+				var task = DataBaseMethods.AddNote(message.From.Id, messageText);
+				task.Wait();
+				var ans = task.IsCompletedSuccessfully ? "Заметка добавлена" : "о-оу, что-то пошло не так";
 				await botClient.SendTextMessageAsync(
 					chatId: message.Chat,
 					text: ans,
@@ -45,25 +42,19 @@ public static class BotCommands
 		{
 			// Тут получает нажатия на inline кнопки
 			var callBackQuery = update.CallbackQuery;
-
-			async void SendNote(Note? notes) => await botClient.SendTextMessageAsync(
-				callBackQuery.Message.Chat.Id, text: notes.TextValue, replyMarkup: Keyboards.ReplyKeyboard);
-
 			try
 			{
-				if (callBackQuery.Data == "showNote")
+				switch (callBackQuery.Data)
 				{
-					var request = DataBaseMethods.GetRandomNote(callBackQuery.From.Id);
-					SendNote(request.Result);
-				}
-
-				if (callBackQuery.Data == "showAllNotes")
-				{
-					var request = DataBaseMethods.GetAllNotes(callBackQuery.From.Id);
-					request.Result.ForEach(SendNote);
+					case "showNote":
+						await SendRandomNote(botClient, callBackQuery.From.Id);
+						break;
+					case "showAllNotes":
+						SendAllNotes(botClient, callBackQuery.From.Id);
+						break;
 				}
 			}
-			catch (Exception) // clarify exception type
+			catch (Exception) //to-do: clarify exception type
 			{
 				await botClient.SendTextMessageAsync(callBackQuery.Message.Chat.Id,
 					text: "Кажется, у вас еще нет заметок", replyMarkup:Keyboards.ReplyKeyboard);
@@ -76,7 +67,7 @@ public static class BotCommands
 	{
 		Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(exception));
 	}
-
+	
 	public static async Task SendRandomNote(ITelegramBotClient botClient, long tgId)
 	{
 		var request = DataBaseMethods.GetRandomNote(tgId);
@@ -86,4 +77,24 @@ public static class BotCommands
 				tgId, text: request.Result.TextValue, replyMarkup: Keyboards.ReplyKeyboard);
 		}
 	}
+
+	public static void SendAllNotes(ITelegramBotClient botClient, long tgId)
+	{
+		async void SendNote(Note? notes) => await botClient.SendTextMessageAsync(
+			tgId, text: notes.TextValue, replyMarkup: Keyboards.ReplyKeyboard);
+		
+		var request = DataBaseMethods.GetAllNotes(tgId);
+		request.Result.ForEach(SendNote);
+	}
+	
+	private static async void StartCommand(ITelegramBotClient botClient, Message message)
+	{
+		await DataBaseMethods.AddOrUpdateUser(message.From.Id, message.Chat.Id);
+		StartSendingScheduledMessageForUser(message.From.Id);
+		await botClient.SendTextMessageAsync(
+			chatId: message.Chat,
+			text: "Привет, напиши заметку, и однажды я напомню тебе о ней",
+			replyMarkup: Keyboards.ReplyKeyboard);
+	}
+	
 }

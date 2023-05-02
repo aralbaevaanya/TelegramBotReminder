@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using ConfigurationManager = System.Configuration.ConfigurationManager;
 
 namespace TelegramBot.dbutils;
 
@@ -10,11 +11,6 @@ public class ApplicationContext : DbContext
 
 	protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 	{
-		optionsBuilder.UseNpgsql(
-			"Host=localhost;" +
-			"Port=5432;" +
-			"Database=Users;" +
-			"Username=postgres;" +
-			"Password=03032013Aa");
+		optionsBuilder.UseNpgsql(ConfigurationManager.AppSettings["connectionString"]);
 	}
 }
