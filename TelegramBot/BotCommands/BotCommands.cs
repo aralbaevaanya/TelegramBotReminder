@@ -57,7 +57,7 @@ public static class BotCommands
 			catch (Exception) //to-do: clarify exception type
 			{
 				await botClient.SendTextMessageAsync(callBackQuery.Message.Chat.Id,
-					text: "Кажется, у вас еще нет заметок", replyMarkup:Keyboards.ReplyKeyboard);
+					text: "Кажется, у вас еще нет заметок");
 			}
 		}
 	}
@@ -74,14 +74,14 @@ public static class BotCommands
 		if (request.Result.TextValue != null)
 		{
 			await botClient.SendTextMessageAsync(
-				tgId, text: request.Result.TextValue, replyMarkup: Keyboards.ReplyKeyboard);
+				tgId, text: request.Result.TextValue);
 		}
 	}
 
 	public static void SendAllNotes(ITelegramBotClient botClient, long tgId)
 	{
 		async void SendNote(Note? notes) => await botClient.SendTextMessageAsync(
-			tgId, text: notes.TextValue, replyMarkup: Keyboards.ReplyKeyboard);
+			tgId, text: notes.TextValue);
 		
 		var request = DataBaseMethods.GetAllNotes(tgId);
 		request.Result.ForEach(SendNote);
@@ -93,8 +93,7 @@ public static class BotCommands
 		StartSendingScheduledMessageForUser(message.From.Id);
 		await botClient.SendTextMessageAsync(
 			chatId: message.Chat,
-			text: "Привет, напиши заметку, и однажды я напомню тебе о ней",
-			replyMarkup: Keyboards.ReplyKeyboard);
+			text: "Привет, напиши заметку, и однажды я напомню тебе о ней");
 	}
 	
 }

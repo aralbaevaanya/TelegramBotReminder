@@ -6,7 +6,7 @@ using static TelegramBot.SchedulerService.Schedule;
 
 namespace TelegramBot.SchedulerService;
 
-abstract class ReminderJob: IJob
+class ReminderJob: IJob
 {
 	private static readonly Random Random = new();
 	[Obsolete]
@@ -24,4 +24,19 @@ abstract class ReminderJob: IJob
 		var date = DateTime.Today.AddHours(12 + Random.Next(schedule.StartTimeOfDay, schedule.EndTimeOfDay));
 		await AddScheduleJob(tgId, date);
 	}
+	
+	/*public Task Execute(IJobExecutionContext context)
+	{
+		//step 1 - send a note
+		var schedulerContext = context.Scheduler.Context;
+		var bot = (TelegramBotClient)schedulerContext.Get("bot");
+		var tgId = (long)context.MergedJobDataMap["tgId"];
+		Console.WriteLine($"started sending job for user {tgId}");
+		var sendRandomNote = SendRandomNote(bot, tgId);
+		sendRandomNote.Wait(); 
+		// step 2 - set the same job for next day
+		var schedule = DataBaseMethods.GetSchedule(tgId).Result;
+		var date = DateTime.Today.AddHours(12 + Random.Next(schedule.StartTimeOfDay, schedule.EndTimeOfDay));
+		return  AddScheduleJob(tgId, date);
+	}*/
 }

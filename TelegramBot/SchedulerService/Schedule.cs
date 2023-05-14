@@ -22,16 +22,16 @@ public static class Schedule
 		await Scheduler.Start();
 		Scheduler.Context.Put("bot", bot);
 		Console.WriteLine("Start scheduler");
-
-		var todayDate = DateTime.Today.AddHours(-12); //12:00AM -> 00:00AM
+		
 		var rand = new Random();
 		var scheduleBook = DataBaseMethods.GetSchedules();
 		foreach (var scheduleList in scheduleBook)
 		{
 			foreach (var schedule in scheduleList)
 			{
-				await AddScheduleJob(schedule.TgId,
-					todayDate.AddHours(rand.Next(schedule.StartTimeOfDay, schedule.EndTimeOfDay)));
+				var test = DateTime.Now.AddSeconds(30);
+				await AddScheduleJob(schedule.TgId, test);
+				//DateTime.Today.AddHours(rand.Next(schedule.StartTimeOfDay, schedule.EndTimeOfDay)));
 			}
 		}
 	}
@@ -57,11 +57,11 @@ public static class Schedule
 			.Build();
 
 		ITrigger trigger = TriggerBuilder.Create()
-			.WithIdentity(tgId.ToString(), "SendMessageTrigger")
-			.StartAt(dateTime)
-			.WithSimpleSchedule(x => x.WithIntervalInMinutes(1).WithRepeatCount(0).Build())
+			//.StartAt(dateTime)
+			.StartNow()
 			.Build();
 
 		await Scheduler.ScheduleJob(job, trigger);
+		Console.WriteLine($"Added job for user {tgId} at time {dateTime.ToString("h:mm:ss tt zz")}");
 	}
 }
